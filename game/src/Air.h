@@ -1,37 +1,64 @@
 #ifndef AIR_H
 #define AIR_H
 
+#include "stdint.h"
+
 constexpr unsigned int SCREEN_WIDTH = 1440;
 constexpr unsigned int SCREEN_HEIGHT = 800;
 
-constexpr unsigned int AIR_CELL_SIZE = 4;
+constexpr unsigned int AIR_CELL_SIZE = 6;
 constexpr unsigned int AIR_XRES = SCREEN_WIDTH / AIR_CELL_SIZE;
 constexpr unsigned int AIR_YRES = SCREEN_HEIGHT / AIR_CELL_SIZE;
 
-constexpr unsigned int PRESSURE_IDX = 0;
-constexpr unsigned int VX_IDX = 1;
-constexpr unsigned int VY_IDX = 2;
+constexpr uint8_t PRESSURE_IDX = 0;
+constexpr uint8_t VX_IDX = 1;
+constexpr uint8_t VY_IDX = 2;
+
+constexpr float BASE_DENSITY = 0.05f;
+
+using coord_t = uint16_t;
 
 struct AirCell {
-    float data[3];
+    float density;
+    float vx; // x, y momentum
+    float vy;
+
+    friend inline AirCell operator*(float x, const AirCell &c) {
+        return AirCell { c.density * x, c.vx * x, c.vy * x };
+    }
+    friend inline AirCell operator*(const AirCell &c, float x) {
+        return AirCell { c.density * x, c.vx * x, c.vy * x };
+    }
+    friend inline AirCell operator-(const AirCell &lhs, const AirCell &rhs) {
+        return AirCell { lhs.density - rhs.density, lhs.vx - rhs.vx, lhs.vy - rhs.vy };
+    }
+    friend inline AirCell operator+(const AirCell &lhs, const AirCell &rhs) {
+        return AirCell { lhs.density + rhs.density, lhs.vx + rhs.vx, lhs.vy + rhs.vy };
+    }
 };
 
 class Air {
 public:
     AirCell cells[AIR_YRES][AIR_XRES];
     AirCell out_cells[AIR_YRES][AIR_XRES];
+    AirCell out_cells2[AIR_YRES][AIR_XRES];
 
     void clear();
-    void update();
+    void update(int i);
+
+    AirCell fx(AirCell &cell);
+    AirCell fy(AirCell &cell);
+
+    AirCell getFluxX(AirCell &left, AirCell &right);
+    AirCell getFluxY(AirCell &left, AirCell &right);
 
     Air();
 
 private:
     void setEdgesAndWalls();
-    void setPressureFromVelocity();
-    void setVelocityFromPressure();
-    void diffusion();
-    void advection();
+    // void projectFutureValueX(const coord_t x, const coord_t y, const uint8_t data_idx);
+    // void projectFutureValueY(const coord_t x, const coord_t y, const uint8_t data_idx);
+    void projectFutureValue(const coord_t x, const coord_t y);
 };
 
 #endif
