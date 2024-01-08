@@ -15,9 +15,9 @@ int main() {
     Air air;
 
     auto y=  10;
-        air.cells[y][10].density = 30.9f;
-        air.cells[y][10].vx = 1.0f;
-        air.cells[y][10].vy = 1.0f;
+        // air.cells[y][10].density = 600.9f;
+        // air.cells[y][10].vx = 10.0f;
+        // air.cells[y][10].vy = 1.0f;
     int i = 0;
 
 
@@ -36,20 +36,30 @@ int main() {
 
 
 void UpdateDrawFrame(Air &air, int &i) {
-    for (int y = 10; y <21; y++) {
-        // air.cells[y][10].density = 10.0f;
-        // air.cells[y][10].vx = 1.0f;
-        // air.cells[y][10].vy = 0.0f;
+    for (int y = AIR_YRES / 2; y < AIR_YRES /2  + 50; y++) {
+        air.cells[y][AIR_XRES / 2].density = 50.0f;
+        //air.cells[y][10].vx = 1.0f;
+        //air.cells[y][10].vy = 0.0f;
+    }
+
+    for (int y = AIR_YRES / 2; y < AIR_YRES  - 3; y++) {
+        for (auto x = AIR_XRES / 4; x < AIR_XRES / 4 + 5; x++) {
+            air.cells[y][x].vx = 0.0f;
+            air.cells[y][x].vy = 0.0f;
+        }
+
+        //air.cells[y][10].vx = 1.0f;
+        //air.cells[y][10].vy = 0.0f;
     }
     air.update(i);
-    i++;
+    // i++;
 
     BeginDrawing();
     ClearBackground(BLACK);
 
     for (auto y = 0; y < AIR_YRES; y++)
     for (auto x = 0; x < AIR_XRES; x++) {
-        constexpr float MAX_P = 4.0f;
+        constexpr float MAX_P = 1.1f;
         const float alpha = std::max(-MAX_P, std::min(MAX_P, air.cells[y][x].density - BASE_DENSITY)) * 255.0f / MAX_P;
 
         if (alpha > 0)

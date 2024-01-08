@@ -2,11 +2,12 @@
 #define AIR_H
 
 #include "stdint.h"
+#include <vector>
 
 constexpr unsigned int SCREEN_WIDTH = 1440;
 constexpr unsigned int SCREEN_HEIGHT = 800;
 
-constexpr unsigned int AIR_CELL_SIZE = 6;
+constexpr unsigned int AIR_CELL_SIZE = 3;
 constexpr unsigned int AIR_XRES = SCREEN_WIDTH / AIR_CELL_SIZE;
 constexpr unsigned int AIR_YRES = SCREEN_HEIGHT / AIR_CELL_SIZE;
 
@@ -14,7 +15,7 @@ constexpr uint8_t PRESSURE_IDX = 0;
 constexpr uint8_t VX_IDX = 1;
 constexpr uint8_t VY_IDX = 2;
 
-constexpr float BASE_DENSITY = 0.05f;
+constexpr float BASE_DENSITY = 10.5f;
 
 using coord_t = uint16_t;
 
@@ -37,11 +38,16 @@ struct AirCell {
     }
 };
 
+using grid = std::vector<std::vector<AirCell>>;
+
 class Air {
 public:
-    AirCell cells[AIR_YRES][AIR_XRES];
-    AirCell out_cells[AIR_YRES][AIR_XRES];
-    AirCell out_cells2[AIR_YRES][AIR_XRES];
+    //AirCell cells[AIR_YRES][AIR_XRES];
+    //AirCell out_cells[AIR_YRES][AIR_XRES];
+    //AirCell out_cells2[AIR_YRES][AIR_XRES];
+    grid cells;
+    grid out_cells;
+    grid out_cells2;
 
     void clear();
     void update(int i);
@@ -53,6 +59,7 @@ public:
     AirCell getFluxY(AirCell &left, AirCell &right);
 
     Air();
+    ~Air();
 
 private:
     void setEdgesAndWalls();

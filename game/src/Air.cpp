@@ -6,18 +6,26 @@
 
 constexpr float dt = 1.0f; // Delta t timestep
 constexpr float dx = static_cast<float>(AIR_CELL_SIZE);
-constexpr float C = 2.0f; // Wave speed
-constexpr float MAX_V = 1.2f;
+constexpr float C = 1.0f; // Wave speed
+constexpr float MAX_V = 0.9f;
 
 
 Air::Air() {
+    cells = std::vector<std::vector<AirCell>>(AIR_YRES, std::vector<AirCell>(AIR_XRES));
+    out_cells = std::vector<std::vector<AirCell>>(AIR_YRES, std::vector<AirCell>(AIR_XRES));
+    out_cells2 = std::vector<std::vector<AirCell>>(AIR_YRES, std::vector<AirCell>(AIR_XRES));
+
     clear();
 }
 
+Air::~Air() {
+
+}
+
 void Air::clear() {
-    memset(cells, 0.0f, sizeof(cells));
-    memset(out_cells, 0.0f, sizeof(cells));
-    memset(out_cells2, 0.0f, sizeof(cells));
+    //memset(cells, 0.0f, sizeof(cells));
+   // memset(out_cells, 0.0f, sizeof(cells));
+    //memset(out_cells2, 0.0f, sizeof(cells));
 
     for (auto y = 0; y < AIR_YRES; y++)
     for (auto x = 0; x < AIR_XRES; x++) {
@@ -58,25 +66,26 @@ void Air::update(int i) {
 
         out_cells2[y][x].vx = std::clamp(out_cells2[y][x].vx, -MAX_V, MAX_V);
         out_cells2[y][x].vy = std::clamp(out_cells2[y][x].vy, -MAX_V, MAX_V);
+        out_cells2[y][x].density = std::clamp(out_cells2[y][x].density, BASE_DENSITY - 0.5f, 100.0f);
 
         // out_cells2[y][x] = 0.5f * (out_cells[y][x] + cells[y][x]) - dt/dx * 0.5f * (fx(out_cells[y][x]) - fx(out_cells[y][x - 1]));
     }
 
-    for (auto y = 1; y < AIR_YRES - 1; y++)
-    for (auto x = 1; x < AIR_XRES - 1; x++) {
+    for (auto y = 0; y < AIR_YRES - 0; y++)
+    for (auto x = 0; x < AIR_XRES - 0; x++) {
         cells[y][x] = out_cells2[y][x];
 
-        if (cells[y][x].density < 1)
-            cells[y][x].density = 1;
+        // if (cells[y][x].density < BASE_DENSITY)
+        //     cells[y][x].density = BASE_DENSITY;
 
         if (x <= 2 || x >= AIR_XRES - 3) {
-            cells[y][x].vx *= 0.4;
-            cells[y][x].vy *= 0.4;
+            cells[y][x].vx = 0.0;
+            cells[y][x].vy = 0.0;
             cells[y][x].density = BASE_DENSITY;
         }
         else if (y <= 2 || y >= AIR_YRES - 3) {
-            cells[y][x].vx *= 0.4;
-            cells[y][x].vy *= 0.4;
+            cells[y][x].vx = 0.0;
+            cells[y][x].vy = 0.0;
             cells[y][x].density = BASE_DENSITY;
         }
     }
@@ -121,8 +130,6 @@ AirCell Air::getFluxX(AirCell &left, AirCell &right) {
     auto right_flux = fx(right);
 
     auto estimate = (left_flux - right_flux);
-    if (estimate.density > 100)
-        std::cout << estimate.density << "  " << estimate.vx << ", " << estimate.vy << "\n";
     return estimate;
 }
 
