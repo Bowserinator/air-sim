@@ -21,6 +21,16 @@ int main() {
         // air.cells[y][10].vy = 1.0f;
     int i = 0;
 
+    
+    int R = 10;
+    for (int y = AIR_YRES / 2 - R; y < AIR_YRES / 2 + R; y++) {
+        for (auto x = (int)( AIR_XRES * 0.6 - R); x < AIR_XRES  * 0.6 + R; x++) {
+            if ((y - AIR_YRES / 2) * (y - AIR_YRES / 2) + (x - AIR_XRES * 0.6) * (x - AIR_XRES * 0.6) > R * R)
+                continue;
+            air.walls[y][x] = true;
+        }
+    }
+
 
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop(UpdateDrawFrame, 60, 1);
@@ -37,14 +47,17 @@ int main() {
 
 
 void UpdateDrawFrame(Air &air, int &i) {
-    
+    static bool started = false;
     static float time = 0.0f;
 
-    int R = 10;
-    if (time < 0.05) {
+    if (IsKeyPressed(KEY_K))
+        started = true;
+
+    int R = 20;
+    if (started) {
         for (int y = AIR_YRES / 2 - R; y < AIR_YRES  / 2 + R; y++) {
             // air.pressure[y][AIR_XRES - 25] += 10.0f;
-            air.vx[y][AIR_XRES - 5] = -5.5;
+            air.vx[y][AIR_XRES - 5] = -10.5;
             air.vy[y][AIR_XRES - 5] = 0.00;
 
             // if (time > 5.0f) {
@@ -52,24 +65,9 @@ void UpdateDrawFrame(Air &air, int &i) {
             //     air.vx[y][AIR_XRES - 5] = 0.0f;
             // }
         }
-        time += 0.01;
+        // time += 0.01;
     }
 
-
-    R = 10;
-    for (int y = AIR_YRES / 2 - R; y < AIR_YRES / 2 + R; y++) {
-        for (auto x = (int)( AIR_XRES * 0.6 - R); x < AIR_XRES  * 0.6 + R; x++) {
-            if ((y - AIR_YRES / 2) * (y - AIR_YRES / 2) + (x - AIR_XRES * 0.6) * (x - AIR_XRES * 0.6) > R * R)
-                continue;
-            //air.vx[y][x] = 0.0f;
-           // air.pressure[y][x] = BASE_DENSITY;
-           // air.vy[y][x] = 0.0f;
-            air.walls[y][x] = true;
-        }
-
-        //air.cells[y][10].vx = 1.0f;
-        //air.cells[y][10].vy = 0.0f;
-    }
 
     // for (int y = AIR_YRES / 2; y < AIR_YRES / 4 * 3; y++) {
     //     for (auto x = AIR_XRES / 4 * 3; x < AIR_XRES  * 3/ 4 + 5; x++) {
@@ -87,13 +85,16 @@ void UpdateDrawFrame(Air &air, int &i) {
     BeginDrawing();
     ClearBackground(BLACK);
 
-    if (false) {
+    if (true) {
         for (auto y = 0; y < AIR_YRES; y++)
         for (auto x = 0; x < AIR_XRES; x++) {
-            constexpr float MAX_P = 0.05f;
+            constexpr float MAX_P = 5;
             // const float alpha = std::max(-MAX_P, std::min(MAX_P, air.pressure[y][x])) * 255.0f / MAX_P;
-            const float alpha = std::max(-MAX_P, std::min(MAX_P, air.vx[y][x])) * 255.0f / MAX_P;
-            const float alpha2 = std::max(-MAX_P, std::min(MAX_P, air.vy[y][x])) * 255.0f / MAX_P;
+            float alpha = std::max(-MAX_P, std::min(MAX_P, air.vx[y][x])) * 255.0f / MAX_P;
+            float alpha2 = std::max(-MAX_P, std::min(MAX_P, air.vy[y][x])) * 255.0f / MAX_P;
+
+            alpha = std::abs(alpha);
+            alpha2 = std::abs(alpha2);
 
             // if (alpha > 0)
             if (air.walls[y][x])
@@ -108,7 +109,7 @@ void UpdateDrawFrame(Air &air, int &i) {
     } else {
         for (auto y = 0; y < AIR_YRES; y++)
         for (auto x = 0; x < AIR_XRES; x++) {
-            constexpr float MAX_P = 35.0f;
+            constexpr float MAX_P = 30000.0f;
             const float alpha = std::max(-MAX_P, std::min(MAX_P, air.pressure[y][x])) * 255.0f / MAX_P;
    
             // if (alpha > 0)

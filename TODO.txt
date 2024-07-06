@@ -1,0 +1,17 @@
+
+- https://www.cs.ubc.ca/~rbridson/fluidsimulation/2006/fluids_notes.pdf
+
+vorticity confinment:
+- vorticity vector field:
+    omega = curl of velocity
+
+    N = normalized (grad( curl field )) - vectors that point to center of rotation
+    
+    N poitns to center, omega points along axis of rotation so 
+        f_confinment = N x omega (cross product) * dx * (scaling factor)
+
+
+
+Done:
+Use runge-kutta for advection
+

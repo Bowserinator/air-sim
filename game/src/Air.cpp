@@ -64,18 +64,18 @@ void Air::solve_incompressibility(std::size_t iterations, float dt) {
 
 
 void Air::fill_edges() {
-    for (auto x = 0; x < AIR_XRES; x++) {
-        vy[0][x] = vy[1][x];
-        vy[AIR_YRES - 1][x] = vy[AIR_YRES - 2][x];
-    }
-    for (auto y = 0; y < AIR_YRES; y++) {
-        vx[y][0] = vx[y][1];
-        vx[y][AIR_XRES - 1] = vx[y][AIR_XRES - 2];
-    }
+    // for (auto x = 0; x < AIR_XRES; x++) {
+    //     vx[0][x] = vx[1][x];
+    //     vx[AIR_YRES - 1][x] = vx[AIR_YRES - 2][x];
+    // }
+    // for (auto y = 0; y < AIR_YRES; y++) {
+    //     vy[y][0] = vy[y][1];
+    //     vy[y][AIR_XRES - 1] = vy[y][AIR_XRES - 2];
+    // }
 }
 
 
-float Air::sample_field_bilinear(float x, float y, float field[AIR_YRES][AIR_XRES], float dx, float dy) {
+float Air::sample_field_bilinear(float x, float y, float field[AIR_YRES + 1][AIR_XRES + 1], float dx, float dy) {
     float CELL_SIZE_INV = 1.0f / AIR_CELL_SIZE;
     float HALF_CELL_SIZE = 0.5f * AIR_CELL_SIZE;
 
@@ -146,8 +146,11 @@ float Air::avg_vy_at_edge(int x, int y) {
 void Air::advect_velocities(float dt) {
     float HALF_CELLSIZE = AIR_CELL_SIZE * 0.5f; // h2
 
-    memcpy(new_vx, vx, sizeof(vx));
-    memcpy(new_vy, vy, sizeof(vy));
+    memset(new_vx, 0.0f, sizeof(vx));
+    memset(new_vy, 0.0f, sizeof(vy));
+
+    // memcpy(new_vx, vx, sizeof(vx));
+    // memcpy(new_vy, vy, sizeof(vy));
 
     for (auto y = 1; y < AIR_YRES; y++)
     for (auto x = 1; x < AIR_XRES; x++) {
@@ -168,7 +171,27 @@ void Air::advect_velocities(float dt) {
 
             real_x -= dt * vx_here;
             real_y -= dt * vy_here;
-            new_vx[y][x] = sample_field_bilinear(real_x, real_y, vx, 0.0f, HALF_CELLSIZE);
+
+            float k1_vx = sample_field_bilinear(real_x, real_y, vx, 0.0f, HALF_CELLSIZE);
+            float k1_vy = sample_field_bilinear(real_x, real_y, vy, HALF_CELLSIZE, 0.0f);
+
+            float k2_vx = sample_field_bilinear(real_x + dt / 2 * k1_vx, real_y + dt / 2 * k1_vy,
+                vx, 0.0f, HALF_CELLSIZE);
+            float k2_vy = sample_field_bilinear(real_x + dt / 2 * k1_vx, real_y + dt / 2 * k1_vy,
+                vy, HALF_CELLSIZE, 0.0f);
+
+            float k3_vx = sample_field_bilinear(real_x + dt / 2 * k2_vx, real_y + dt / 2 * k2_vy,
+                vx, 0.0f, HALF_CELLSIZE);
+            float k3_vy = sample_field_bilinear(real_x + dt / 2 * k2_vx, real_y + dt / 2 * k2_vy,
+                vy, HALF_CELLSIZE, 0.0f);
+
+            float k4_vx = sample_field_bilinear(real_x + dt * k3_vx, real_y + dt * k3_vy,
+                vx, 0.0f, HALF_CELLSIZE);
+
+
+            new_vx[y][x] = 1/6.0f * (k1_vx + 2 * k2_vx + 2 * k3_vx + k4_vx);
+            
+            // new_vx[y][x] = sample_field_bilinear(real_x, real_y, vx, 0.0f, HALF_CELLSIZE);
         }
 
         // vy:
@@ -183,7 +206,29 @@ void Air::advect_velocities(float dt) {
 
             real_x -= dt * vx_here;
             real_y -= dt * vy_here;
-            new_vy[y][x] = sample_field_bilinear(real_x, real_y, vy, HALF_CELLSIZE, 0.0f);
+
+            float k1_vx = sample_field_bilinear(real_x, real_y, vx, 0.0f, HALF_CELLSIZE);
+            float k1_vy = sample_field_bilinear(real_x, real_y, vy, HALF_CELLSIZE, 0.0f);
+
+            float k2_vx = sample_field_bilinear(real_x + dt / 2 * k1_vx, real_y + dt / 2 * k1_vy,
+                vx, 0.0f, HALF_CELLSIZE);
+            float k2_vy = sample_field_bilinear(real_x + dt / 2 * k1_vx, real_y + dt / 2 * k1_vy,
+                vy, HALF_CELLSIZE, 0.0f);
+
+            float k3_vx = sample_field_bilinear(real_x + dt / 2 * k2_vx, real_y + dt / 2 * k2_vy,
+                vx, 0.0f, HALF_CELLSIZE);
+            float k3_vy = sample_field_bilinear(real_x + dt / 2 * k2_vx, real_y + dt / 2 * k2_vy,
+                vy, HALF_CELLSIZE, 0.0f);
+
+            float k4_vy = sample_field_bilinear(real_x + dt * k3_vx, real_y + dt * k3_vy,
+                vy, HALF_CELLSIZE, 0.0f);
+
+            new_vy[y][x] = 1/6.0f * (k1_vy + 2 * k2_vy + 2 * k3_vy + k4_vy);
+            
+
+
+
+            // new_vy[y][x] = sample_field_bilinear(real_x, real_y, vy, HALF_CELLSIZE, 0.0f);
         }
     }
 
